@@ -13,11 +13,11 @@ export const useSceneControls = () => {
       useResponsive: { value: true, label: 'Responsive Layout' }
     }),
     view: folder({
-      isAxonometric: { value: false, label: 'Axonometric View' },
-      cameraDistance: { value: 10, min: 5, max: 20, step: 0.5 },
       panX: { value: 0, min: -10, max: 10, step: 0.5, label: 'Pan Horizontal' },
       panY: { value: 0, min: -10, max: 10, step: 0.5, label: 'Pan Vertical' },
-      panZ: { value: 0, min: -10, max: 10, step: 0.5, label: 'Pan Depth' }
+      panZ: { value: 0, min: -10, max: 10, step: 0.5, label: 'Pan Depth' },
+      isAxonometric: { value: false, label: 'Axonometric View' },
+      cameraDistance: { value: 10, min: 5, max: 20, step: 0.5 }
     }),
     colors: folder({
       linkColors: { value: false, label: 'Use Same Color' },
