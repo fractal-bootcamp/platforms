@@ -2,35 +2,93 @@ import React, { useEffect, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, RoundedBox, Html, Tube } from '@react-three/drei';
 import { Vector3, CatmullRomCurve3 } from 'three';
-import { PlatformProps, PipeProps, FloatingComponentProps } from '../types/platform.types';
+import { PlatformProps, PipeProps, FloatingComponentProps, PlatformEdges } from '../types/platform.types';
 import Rhombus from './Rhombus';
 import { useSceneControls } from './Controls';
+import { Pipe } from './Pipe';
 
-const Platform: React.FC<PlatformProps> = ({ 
-  position, 
-  color, 
-  hovered, 
+const calculatePlatformEdges = (
+  position: [number, number, number],
+  width: number,
+  depth: number,
+  height: number
+): PlatformEdges => {
+  const [x, y, z] = position;
+  const halfWidth = width / 2;
+  const halfDepth = depth / 2;
+  
+  return {
+    center: new Vector3(x, y + height, z),
+    top: new Vector3(x, y + height, z - halfDepth),
+    bottom: new Vector3(x, y + height, z + halfDepth),
+    left: new Vector3(x - halfWidth, y + height, z),
+    right: new Vector3(x + halfWidth, y + height, z),
+    topLeft: new Vector3(x - halfWidth, y + height, z - halfDepth),
+    topRight: new Vector3(x + halfWidth, y + height, z - halfDepth),
+    bottomLeft: new Vector3(x - halfWidth, y + height, z + halfDepth),
+    bottomRight: new Vector3(x + halfWidth, y + height, z + halfDepth),
+  };
+};
+
+const EdgePoint: React.FC<{ position: Vector3; label: string }> = ({ position, label }) => {
+  return (
+    <group position={position}>
+      <mesh>
+        <sphereGeometry args={[0.05]} />
+        <meshBasicMaterial color="red" />
+      </mesh>
+      <Html>
+        <div style={{ 
+          color: 'white', 
+          backgroundColor: 'rgba(0,0,0,0.7)', 
+          padding: '2px 5px',
+          borderRadius: '3px',
+          fontSize: '10px'
+        }}>
+          {label}
+        </div>
+      </Html>
+    </group>
+  );
+};
+
+const Platform: React.FC<PlatformProps> = ({
+  position,
+  color,
+  hovered,
   onHover,
   width = 3,
   depth = 2,
-  height = 0.2 
+  height = 0.2,
+  showEdgePoints = false
 }) => {
+  const edges = calculatePlatformEdges(position, width, depth, height);
+
   return (
-    <RoundedBox
-      args={[width, height, depth]}
-      radius={0.1}
-      smoothness={1}
-      position={position}
-      onPointerOver={() => onHover?.(true)}
-      onPointerOut={() => onHover?.(false)}
-    >
-      <meshStandardMaterial 
-        color={color} 
-        metalness={0.2}
-        roughness={0.7}
-      />
-      <Shadow position={[position[0] + 0.1, position[1] - 0.1, position[2]]} />
-    </RoundedBox>
+    <group>
+      <RoundedBox
+        args={[width, height, depth]}
+        radius={0.1}
+        smoothness={1}
+        position={position}
+        onPointerOver={() => onHover?.(true)}
+        onPointerOut={() => onHover?.(false)}
+      >
+        <meshStandardMaterial 
+          color={color} 
+          metalness={0.2}
+          roughness={0.7}
+        />
+      </RoundedBox>
+      
+      {showEdgePoints && (
+        <>
+          {Object.entries(edges).map(([key, pos]) => (
+            <EdgePoint key={key} position={pos} label={key} />
+          ))}
+        </>
+      )}
+    </group>
   );
 };
 
@@ -71,7 +129,8 @@ const Scene: React.FC = () => {
     cameraDistance,
     panX,
     panY,
-    panZ
+    panZ,
+    showEdgePoints
   } = useSceneControls();
 
   // Update camera position and target based on controls
@@ -132,11 +191,6 @@ const Scene: React.FC = () => {
 
   const platformPositions = getPlatformPositions(viewport.width);
 
-  // Calculate pipe points based on platform positions
-  const pipePoints = React.useMemo(() => {
-    return calculatePipePoints(platformPositions);
-  }, [platformPositions, horizontalOffset, verticalStagger]);
-
   return (
     <>
       <ambientLight intensity={0.5} />
@@ -146,20 +200,41 @@ const Scene: React.FC = () => {
       {/* Create a group to offset all content based on pan values */}
       <group position={[0, 0, 0]}>
         {platformPositions.map((position, index) => (
-          <Platform
-            key={index}
-            position={position}
-            color={getPlatformColor(index)}
-            hovered={hoveredPlatform === index}
-            onHover={(hover) => setHoveredPlatform(hover ? index : null)}
-            width={width}
-            depth={depth}
-            height={height}
-          />
+          <React.Fragment key={index}>
+            <Platform
+              position={position}
+              color={getPlatformColor(index)}
+              hovered={hoveredPlatform === index}
+              onHover={(hover) => setHoveredPlatform(hover ? index : null)}
+              width={width}
+              depth={depth}
+              height={height}
+              showEdgePoints={showEdgePoints}
+            />
+            {index > 0 && (
+              <Pipe
+                platformId={index as 1 | 2 | 3}
+                width={width}
+                depth={depth}
+                platformEdges={calculatePlatformEdges(position, width, depth, height)}
+                startPoint={calculatePlatformEdges(
+                  platformPositions[index-1], 
+                  width, 
+                  depth, 
+                  height
+                ).bottomRight}
+                endPoint={calculatePlatformEdges(
+                  position,
+                  width,
+                  depth,
+                  height
+                ).topLeft}
+              />
+            )}
+          </React.Fragment>
         ))}
-
+        
         <Rhombus position={[platformPositions[0][0], platformPositions[0][1] + 1, platformPositions[0][2]]} />
-        <Pipe points={pipePoints} />
       </group>
 
       {!isAxonometric && (
@@ -202,49 +277,6 @@ const Shadow: React.FC<{ position: [number, number, number] }> = ({ position }) 
       <shadowMaterial transparent opacity={0.2} />
     </mesh>
   );
-};
-
-// Add Pipe component
-const Pipe: React.FC<PipeProps> = ({ points, color = '#ff8c00', radius = 0.1 }) => {
-  const curve = new CatmullRomCurve3(points);
-  
-  return (
-    <Tube args={[curve, 64, radius, 8, false]}>
-      <meshStandardMaterial 
-        color={color}
-        emissive={color}
-        emissiveIntensity={0.6}
-        toneMapped={false}
-        metalness={0.5}
-        roughness={0.2}
-      />
-    </Tube>
-  );
-};
-
-// Add calculatePipePoints helper function
-const calculatePipePoints = (platformPositions: [number, number, number][]): Vector3[] => {
-  const points: Vector3[] = [];
-  
-  platformPositions.forEach((pos, index) => {
-    const [x, y, z] = pos;
-    
-    if (index === 0) {
-      // Starting point
-      points.push(new Vector3(x, y + 0.5, z)); // Slightly above first platform
-      points.push(new Vector3(x, y, z));
-    } else {
-      // Add intermediate points for smoother curves
-      const prevPos = platformPositions[index - 1];
-      const midX = (prevPos[0] + x) / 2;
-      const midY = prevPos[1] - 0.2; // Slight dip for visual appeal
-      
-      points.push(new Vector3(midX, midY, z));
-      points.push(new Vector3(x, y, z));
-    }
-  });
-  
-  return points;
 };
 
 export default Platforms; 
