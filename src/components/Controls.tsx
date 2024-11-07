@@ -25,5 +25,17 @@ export const useSceneControls = () => {
       platform2Color: { value: '#98ffb3' },
       platform3Color: { value: '#ffb3b3' },
     }),
+    pipe: folder({
+      pipeWidth: { value: 0.05, min: 0.02, max: 0.2, step: 0.01, label: 'Pipe Width' },
+      pipeColor: { value: '#ff6b00', label: 'Pipe Color' },
+      pipeHeight: { value: 0.1, min: 0.05, max: 0.3, step: 0.01, label: 'Pipe Height' },
+    }),
+    debug: folder({
+      showEdgePoints: { value: false, label: 'Show Edge Points' },
+      showPipeDebug: { value: false, label: 'Show Pipe Debug' },
+      showPipeLabels: { value: true, label: 'Show Debug Labels' },
+      showConstructionLines: { value: true, label: 'Show Construction' },
+      showPipeMetrics: { value: true, label: 'Show Metrics' },
+    }),
   });
 }; 
