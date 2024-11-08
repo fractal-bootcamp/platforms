@@ -202,6 +202,7 @@ const Scene: React.FC = () => {
         {platformPositions.map((position, index) => (
           <React.Fragment key={index}>
             <Platform
+              id={(index + 1) as 1 | 2 | 3}
               position={position}
               color={getPlatformColor(index)}
               hovered={hoveredPlatform === index}

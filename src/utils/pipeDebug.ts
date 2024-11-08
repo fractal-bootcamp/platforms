@@ -7,38 +7,42 @@ import {
   DebugSegment,
   PipeDebugProps,
   DEBUG_COLORS,
-  PathDebugInfo,
+  DEFAULT_STYLES,
+  PathDebugInfo
 } from '../types/pipeDebug.types';
 
-// Debug point visualization
-const DebugPointViz: React.FC<DebugPoint> = ({ position, label, type, color }) => (
+// Debug visualization components
+const DebugPointViz: React.FC<DebugPoint> = ({ 
+  position, 
+  label, 
+  type, 
+  color,
+  opacity = type === 'control' ? 0.5 : 0.7 
+}) => (
   <group position={[position.x, position.y, position.z]}>
     <mesh>
       <sphereGeometry args={[0.05]} />
       <meshBasicMaterial 
         color={color || DEBUG_COLORS[type]} 
         transparent 
-        opacity={type === 'control' ? 0.5 : 0.7} 
+        opacity={opacity}
       />
     </mesh>
     <Html>
-      <div style={{
-        background: 'rgba(0,0,0,0.7)',
-        color: 'white',
-        padding: '2px 4px',
-        borderRadius: '3px',
-        fontSize: '10px',
-        transform: 'translate(10px, -50%)',
-        whiteSpace: 'nowrap'
-      }}>
+      <div style={DEFAULT_STYLES.label}>
         {label}
       </div>
     </Html>
   </group>
 );
 
-// Debug line visualization
-const DebugLineViz: React.FC<DebugLine> = ({ start, end, type, color }) => (
+const DebugLineViz: React.FC<DebugLine> = ({ 
+  start, 
+  end, 
+  type, 
+  color,
+  opacity = type === 'construction' ? 0.3 : 1
+}) => (
   <Line
     points={[start, end]}
     color={color || DEBUG_COLORS[type]}
@@ -46,19 +50,42 @@ const DebugLineViz: React.FC<DebugLine> = ({ start, end, type, color }) => (
     dashed={type === 'construction'}
     dashSize={type === 'construction' ? 0.1 : 0}
     dashScale={1}
-    opacity={type === 'construction' ? 0.3 : 1}
+    opacity={opacity}
     transparent
   />
 );
 
-// Debug segment visualization
-const DebugSegmentViz: React.FC<DebugSegment> = ({ points, type }) => (
+const DebugSegmentViz: React.FC<DebugSegment> = ({ 
+  points, 
+  type,
+  color 
+}) => (
   <Line
     points={points}
-    color={DEBUG_COLORS[type]}
+    color={color || DEBUG_COLORS[type]}
     lineWidth={2}
     dashed={false}
   />
+);
+
+// Info panel component
+const InfoPanel: React.FC<{
+  points: Vector3[];
+  debugInfo?: PathDebugInfo;
+}> = ({ points, debugInfo }) => (
+  <Html position={[0, 2, 0]}>
+    <div style={DEFAULT_STYLES.infoPanel}>
+      <div>Points: {points.length}</div>
+      {debugInfo && (
+        <>
+          <div>Type: {debugInfo.routingType}</div>
+          {debugInfo.metadata && Object.entries(debugInfo.metadata).map(([key, value]) => (
+            <div key={key}>{key}: {value}</div>
+          ))}
+        </>
+      )}
+    </div>
+  </Html>
 );
 
 // Main debug visualization component
@@ -67,22 +94,22 @@ export const PipeDebugVisualization: React.FC<PipeDebugProps> = ({
   debugInfo,
   showLabels = false,
   showConstructionLines = false,
+  showMetadata = true
 }) => {
   if (!points || points.length < 2) return null;
 
   return (
     <group>
-      {/* Render debug info if available */}
-      {debugInfo && (
+      {debugInfo ? (
         <>
           {/* Construction Lines */}
-          {showConstructionLines && debugInfo.lines.map((line, i) => (
-            line.type === 'construction' && (
+          {showConstructionLines && debugInfo.lines
+            .filter(line => line.type === 'construction')
+            .map((line, i) => (
               <DebugLineViz key={`construction-${i}`} {...line} />
-            )
-          ))}
+            ))}
 
-          {/* Debug Segments */}
+          {/* Path Segments */}
           {debugInfo.segments.map((segment, i) => (
             <DebugSegmentViz key={`segment-${i}`} {...segment} />
           ))}
@@ -92,19 +119,14 @@ export const PipeDebugVisualization: React.FC<PipeDebugProps> = ({
             <DebugPointViz key={`point-${i}`} {...point} />
           ))}
         </>
-      )}
-
-      {/* Fallback visualization if no debug info */}
-      {!debugInfo && (
+      ) : (
         <>
-          {/* Main Path */}
+          {/* Fallback visualization */}
           <Line
             points={points}
             color={DEBUG_COLORS.path}
             lineWidth={2}
           />
-
-          {/* Basic Point Labels */}
           {showLabels && points.map((point, i) => (
             <DebugPointViz
               key={`point-${i}`}
@@ -116,29 +138,19 @@ export const PipeDebugVisualization: React.FC<PipeDebugProps> = ({
         </>
       )}
 
-      {/* Path Info */}
-      <Html position={[0, 2, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          background: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          padding: '8px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          fontFamily: 'monospace'
-        }}>
-          <div>Points: {points.length}</div>
-          {debugInfo && <div>Type: {debugInfo.routingType}</div>}
-        </div>
-      </Html>
+      {/* Info Panel */}
+      {showMetadata && (
+        <InfoPanel points={points} debugInfo={debugInfo} />
+      )}
     </group>
   );
 };
 
-// Pure utility functions without JSX
+// Utility functions
 export const calculateDebugInfo = (
   points: Vector3[],
-  showLabels: boolean,
-  showConstructionLines: boolean
+  routingType: string = 'direct',
+  metadata?: Record<string, any>
 ): PathDebugInfo => {
   const debugPoints = points.map((point, i) => ({
     position: point,
@@ -161,6 +173,7 @@ export const calculateDebugInfo = (
     points: debugPoints,
     lines: debugLines,
     segments: debugSegments,
-    routingType: 'direct'
+    routingType,
+    metadata
   };
 }; 

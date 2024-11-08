@@ -1,50 +1,101 @@
-# React + TypeScript + Vite
+# 3D Platform Connection Visualization
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React-based 3D visualization tool for modeling and connecting elevated platforms with configurable pipe routing.
 
-Currently, two official plugins are available:
+## 🌟 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Platform Management
+- Dynamic 3D platform positioning
+- Configurable platform dimensions and spacing
+- Interactive hover states and material properties
+- Responsive layout adaptation
 
-## Expanding the ESLint configuration
+### Selection System
+- Grid-based point selection
+- Customizable grid subdivisions
+- Visual selection cage with offset controls
+- Point management with Zustand state
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+### Pipe Routing
+- Automatic pipe path generation
+- Multiple routing strategies
+- Collision detection and avoidance
+- Debug visualization tools
 
-- Configure the top-level `parserOptions` property like this:
+### Camera Controls
+- Axonometric/Perspective view switching
+- Orbit controls with angle constraints
+- Pan and zoom functionality
+- Camera distance adjustment
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 🛠 Tech Stack
+
+- **React** - UI framework
+- **Three.js** - 3D rendering engine
+- **@react-three/fiber** - React renderer for Three.js
+- **@react-three/drei** - Useful helpers and abstractions
+- **Zustand** - State management
+- **Leva** - Debug controls and tweaking
+- **TypeScript** - Type safety and developer experience
+
+## 🚀 Getting Started
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/platform-visualization.git
 ```
-
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+2. Install Dependices
+```bash
+npm install
 ```
+3. Start the development server:
+``` bash
+npm run dev
+```
+## 🎮 Controls
+
+### Platform Controls
+- **Dimensions**: Adjust width, depth, and height
+- **Spacing**: Configure horizontal and vertical offsets
+- **Colors**: Customize individual platform colors
+
+### Selection Tools
+- **Grid Toggle**: Show/hide selection grids
+- **Subdivisions**: Adjust grid density
+- **Offset**: Control grid boundary offset
+- **Point Management**: Add/remove connection points
+
+### View Controls
+- **Camera**: Toggle between axonometric and perspective views
+- **Pan**: Adjust scene position
+- **Orbit**: Rotate around scene (perspective mode only)
+
+## 🏗 Project Structure
+src/
+├── components/ # React components
+│ ├── Platform.tsx # Individual platform
+│ ├── Platforms.tsx # Platform container
+│ ├── SelectionCage.tsx # Grid selection system
+│ └── Controls.tsx # Leva controls setup
+├── store/ # State management
+│ └── pipeStore.ts # Zustand store
+├── types/ # TypeScript definitions
+├── utils/ # Helper functions
+└── styles/ # CSS styles
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+## 📝 License
+
+MIT License - feel free to use this project for any purpose.
+
+## 🙏 Acknowledgments
+
+- Three.js community
+- React Three Fiber team
+- Zustand contributors
